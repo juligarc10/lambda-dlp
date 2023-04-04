@@ -1,5 +1,6 @@
 *.cmi
 *.cmo
+*.json
 top
 parser.ml
 parser.mli

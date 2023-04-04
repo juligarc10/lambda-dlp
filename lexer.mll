@@ -15,6 +15,7 @@ rule token = parse
   | "else"      { ELSE }
   | "succ"      { SUCC }
   | "pred"      { PRED }
+  | "letrec"    { LETREC }
   | "iszero"    { ISZERO }
   | "let"       { LET }
   | "in"        { IN }

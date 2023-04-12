@@ -3,6 +3,7 @@ type ty =
     TyBool
   | TyNat
   | TyArr of ty * ty
+  | TyString
 ;;
 
 type context =
@@ -21,6 +22,7 @@ type term =
   | TmAbs of string * ty * term
   | TmApp of term * term
   | TmLetIn of string * term * term
+  | TmString of string
 ;;
 
 val emptyctx : context;;

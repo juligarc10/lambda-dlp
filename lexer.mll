@@ -27,8 +27,18 @@ rule token = parse
   | ':'         { COLON }
   | "->"        { ARROW }
   | ['0'-'9']+  { INTV (int_of_string (Lexing.lexeme lexbuf)) }
+  | '"'         { read_string (Buffer.create 17) lexbuf }
   | ['a'-'z']['a'-'z' '_' '0'-'9']*
                 { STRINGV (Lexing.lexeme lexbuf) }
   | eof         { EOF }
   | _           { raise Lexical_error } 
 
+  and read_string buf = parse
+  | '"'       { STRINGV (Buffer.contents buf) }
+  | '\\' 'n'  { Buffer.add_char buf '\n'; read_string buf lexbuf }
+  | [^ '"' '\\']+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      read_string buf lexbuf
+    }
+  | _         { raise Lexical_error }
+  | eof       { raise Lexical_error }

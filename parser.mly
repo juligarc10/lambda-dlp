@@ -67,7 +67,7 @@ atomicTerm :
   | FALSE
       { TmFalse }
   | STRINGV
-      { TmVar $1 }
+      { TmString $1 }
   | INTV
       { let rec f = function
             0 -> TmZero

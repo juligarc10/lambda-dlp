@@ -330,10 +330,8 @@ let rec eval1 tm = match tm with
       TmLetIn (x, t1', t2) 
 
     (* E-FixBeta *)
-  | TmFix v1 when isval v1 ->
-      (match v1 with
-          TmAbs (x, _, t12) -> subst x tm t12
-        | _ -> raise NoRuleApplies)
+  | TmFix (TmAbs (x, _, t12)) ->
+      subst x tm t12
 
     (* E-Fix *)
   | TmFix t1 ->

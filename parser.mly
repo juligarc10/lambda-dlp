@@ -47,8 +47,8 @@ term :
       { TmAbs ($2, $4, $6) }
   | LET STRINGV EQ term IN term
       { TmLetIn ($2, $4, $6) }
-	| LETREC STRINGV COLON ty EQ term IN term
-        { TmLetIn ($2, TmAbs ($2, $4, $6), $8)}
+  | LETREC STRINGV COLON ty EQ term IN term
+      { TmLetIn ($2, TmFix( TmAbs ($2, $4, $6)), $8)}
 
 appTerm :
     atomicTerm

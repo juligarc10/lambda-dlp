@@ -24,9 +24,11 @@
 %token COLON
 %token ARROW
 %token EOF
+%token PLUSPLUS
 
 %token <int> INTV
 %token <string> STRINGV
+%token <string> STRING
 
 %start s
 %type <Lambda.term> s
@@ -46,6 +48,8 @@ term :
       { TmAbs ($2, $4, $6) }
   | LET STRINGV EQ term IN term
       { TmLetIn ($2, $4, $6) }
+	| term PLUSPLUS term
+			{ TmConcat ($1, $3) }
 
 appTerm :
     atomicTerm
@@ -67,6 +71,8 @@ atomicTerm :
   | FALSE
       { TmFalse }
   | STRINGV
+      { TmVar $1 }
+  | STRING
       { TmString $1 }
   | INTV
       { let rec f = function

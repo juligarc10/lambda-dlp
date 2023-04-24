@@ -25,6 +25,7 @@ type term =
   | TmApp of term * term
   | TmLetIn of string * term * term
   | TmString of string
+  | TmConcat of term * term
 ;;
 
 
@@ -126,6 +127,11 @@ let rec typeof ctx tm = match tm with
     (* T-String *)
   | TmString s ->
       TyString
+
+    (* T-Concat *)
+  | TmConcat (t1, t2) ->
+      if typeof ctx t1 = TyString && typeof ctx t2 = TyString then TyString
+      else raise (Type_error "arguments of ++ are not strings")
 ;;
 
 
@@ -158,9 +164,11 @@ let rec string_of_term = function
       "(lambda " ^ s ^ ":" ^ string_of_ty tyS ^ ". " ^ string_of_term t ^ ")"
   | TmApp (t1, t2) ->
       "(" ^ string_of_term t1 ^ " " ^ string_of_term t2 ^ ")"
+  | TmString s -> "\"" ^ s ^ "\""
   | TmLetIn (s, t1, t2) ->
       "let " ^ s ^ " = " ^ string_of_term t1 ^ " in " ^ string_of_term t2
-  | TmString s -> "\"" ^ s ^ "\""
+  | TmConcat (t1, t2) ->
+      "(" ^ string_of_term t1 ^ " ++ " ^ string_of_term t2 ^ ")"
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -198,6 +206,8 @@ let rec free_vars tm = match tm with
       lunion (ldif (free_vars t2) [s]) (free_vars t1)
   | TmString s ->
       []
+  | TmConcat (t1, t2) ->
+      lunion (free_vars t1) (free_vars t2)
 ;;
 
 let rec fresh_name x l =
@@ -238,6 +248,7 @@ let rec subst x s tm = match tm with
            else let z = fresh_name y (free_vars t2 @ fvs) in
                 TmLetIn (z, subst x s t1, subst x s (subst y (TmVar z) t2))
   | TmString s -> TmString s
+  | TmConcat (t1, t2) -> TmConcat (subst x s t1, subst x s t2)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -324,6 +335,10 @@ let rec eval1 tm = match tm with
   | TmLetIn(x, t1, t2) ->
       let t1' = eval1 t1 in
       TmLetIn (x, t1', t2) 
+
+    (* E-Concat*)
+  | TmConcat (TmString s1, TmString s2) ->
+      TmString (s1 ^ s2)
 
   | _ ->
       raise NoRuleApplies

@@ -23,6 +23,7 @@ rule token = parse
   | '('         { LPAREN }
   | ')'         { RPAREN }
   | '.'         { DOT }
+  | "++"        { PLUSPLUS }
   | '='         { EQ }
   | ':'         { COLON }
   | "->"        { ARROW }
@@ -34,7 +35,7 @@ rule token = parse
   | _           { raise Lexical_error } 
 
   and read_string buf = parse
-  | '"'       { STRINGV (Buffer.contents buf) }
+  | '"'       { STRING (Buffer.contents buf) }
   | '\\' 'n'  { Buffer.add_char buf '\n'; read_string buf lexbuf }
   | [^ '"' '\\']+
     { Buffer.add_string buf (Lexing.lexeme lexbuf);

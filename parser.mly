@@ -24,10 +24,12 @@
 %token COLON
 %token ARROW
 %token EOF
+%token PLUSPLUS
 %token LETREC
 
 %token <int> INTV
 %token <string> STRINGV
+%token <string> STRING
 
 %start s
 %type <Lambda.term> s
@@ -47,6 +49,8 @@ term :
       { TmAbs ($2, $4, $6) }
   | LET STRINGV EQ term IN term
       { TmLetIn ($2, $4, $6) }
+	| term PLUSPLUS term
+			{ TmConcat ($1, $3) }
   | LETREC STRINGV COLON ty EQ term IN term
       { TmLetIn ($2, TmFix( TmAbs ($2, $4, $6)), $8)}
 
@@ -71,6 +75,8 @@ atomicTerm :
       { TmFalse }
   | STRINGV
       { TmVar $1 }
+  | STRING
+      { TmString $1 }
   | INTV
       { let rec f = function
             0 -> TmZero

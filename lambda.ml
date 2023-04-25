@@ -5,6 +5,7 @@ type ty =
     TyBool
   | TyNat
   | TyArr of ty * ty
+  | TyString
 ;;
 
 type context =
@@ -23,6 +24,8 @@ type term =
   | TmAbs of string * ty * term
   | TmApp of term * term
   | TmLetIn of string * term * term
+  | TmString of string
+  | TmConcat of term * term
   | TmFix of term
 ;;
 
@@ -51,6 +54,8 @@ let rec string_of_ty ty = match ty with
       "Nat"
   | TyArr (ty1, ty2) ->
       "(" ^ string_of_ty ty1 ^ ")" ^ " -> " ^ "(" ^ string_of_ty ty2 ^ ")"
+  | TyString ->
+      "String"
 ;;
 
 exception Type_error of string
@@ -119,6 +124,15 @@ let rec typeof ctx tm = match tm with
       let tyT1 = typeof ctx t1 in
       let ctx' = addbinding ctx x tyT1 in
       typeof ctx' t2
+
+    (* T-String *)
+  | TmString s ->
+      TyString
+
+    (* T-Concat *)
+  | TmConcat (t1, t2) ->
+      if typeof ctx t1 = TyString && typeof ctx t2 = TyString then TyString
+      else raise (Type_error "arguments of ++ are not strings")
     
     (* T-Fix *)
   | TmFix t1 ->
@@ -160,8 +174,11 @@ let rec string_of_term = function
       "(lambda " ^ s ^ ":" ^ string_of_ty tyS ^ ". " ^ string_of_term t ^ ")"
   | TmApp (t1, t2) ->
       "(" ^ string_of_term t1 ^ " " ^ string_of_term t2 ^ ")"
+  | TmString s -> "\"" ^ s ^ "\""
   | TmLetIn (s, t1, t2) ->
       "let " ^ s ^ " = " ^ string_of_term t1 ^ " in " ^ string_of_term t2
+  | TmConcat (t1, t2) ->
+      "(" ^ string_of_term t1 ^ " ++ " ^ string_of_term t2 ^ ")"
   | TmFix t ->
       "fix " ^ "(" ^ string_of_term t ^ ")"
 ;;
@@ -199,6 +216,10 @@ let rec free_vars tm = match tm with
       lunion (free_vars t1) (free_vars t2)
   | TmLetIn (s, t1, t2) ->
       lunion (ldif (free_vars t2) [s]) (free_vars t1)
+  | TmString s ->
+      []
+  | TmConcat (t1, t2) ->
+      lunion (free_vars t1) (free_vars t2)
   | TmFix t ->
       free_vars t
 ;;
@@ -240,6 +261,8 @@ let rec subst x s tm = match tm with
            then TmLetIn (y, subst x s t1, subst x s t2)
            else let z = fresh_name y (free_vars t2 @ fvs) in
                 TmLetIn (z, subst x s t1, subst x s (subst y (TmVar z) t2))
+  | TmString s -> TmString s
+  | TmConcat (t1, t2) -> TmConcat (subst x s t1, subst x s t2)
   | TmFix t ->
       TmFix (subst x s t)
 ;;
@@ -255,6 +278,7 @@ let rec isval tm = match tm with
   | TmFalse -> true
   | TmAbs _ -> true
   | t when isnumericval t -> true
+  | TmString _ -> true
   | _ -> false
 ;;
 
@@ -328,6 +352,18 @@ let rec eval1 tm = match tm with
   | TmLetIn(x, t1, t2) ->
       let t1' = eval1 t1 in
       TmLetIn (x, t1', t2) 
+
+    (* E-Concat*)
+  | TmConcat (TmString s1, TmString s2) ->
+      TmString (s1 ^ s2)
+
+  | TmConcat (TmString s1, t2) ->
+    let t2' = eval1 t2 in
+    TmConcat (TmString s1, t2')
+  
+  | TmConcat (t1, t2) ->
+    let t1' = eval1 t1 in
+    TmConcat (t1', t2)
 
     (* E-FixBeta *)
   | TmFix (TmAbs (x, _, t12)) ->

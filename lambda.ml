@@ -26,6 +26,7 @@ type term =
   | TmLetIn of string * term * term
   | TmString of string
   | TmConcat of term * term
+  | TmFix of term
 ;;
 
 
@@ -132,6 +133,15 @@ let rec typeof ctx tm = match tm with
   | TmConcat (t1, t2) ->
       if typeof ctx t1 = TyString && typeof ctx t2 = TyString then TyString
       else raise (Type_error "arguments of ++ are not strings")
+    
+    (* T-Fix *)
+  | TmFix t1 ->
+      let tyT1 = typeof ctx t1 in
+      (match tyT1 with
+           TyArr (tyT11, tyT12) ->
+             if tyT12 = tyT11 then tyT12
+             else raise (Type_error "result of body not compatible with domain")
+         | _ -> raise (Type_error "arrow type expected"))
 ;;
 
 
@@ -169,6 +179,8 @@ let rec string_of_term = function
       "let " ^ s ^ " = " ^ string_of_term t1 ^ " in " ^ string_of_term t2
   | TmConcat (t1, t2) ->
       "(" ^ string_of_term t1 ^ " ++ " ^ string_of_term t2 ^ ")"
+  | TmFix t ->
+      "fix " ^ "(" ^ string_of_term t ^ ")"
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -208,6 +220,8 @@ let rec free_vars tm = match tm with
       []
   | TmConcat (t1, t2) ->
       lunion (free_vars t1) (free_vars t2)
+  | TmFix t ->
+      free_vars t
 ;;
 
 let rec fresh_name x l =
@@ -249,6 +263,8 @@ let rec subst x s tm = match tm with
                 TmLetIn (z, subst x s t1, subst x s (subst y (TmVar z) t2))
   | TmString s -> TmString s
   | TmConcat (t1, t2) -> TmConcat (subst x s t1, subst x s t2)
+  | TmFix t ->
+      TmFix (subst x s t)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -348,6 +364,15 @@ let rec eval1 tm = match tm with
   | TmConcat (t1, t2) ->
     let t1' = eval1 t1 in
     TmConcat (t1', t2)
+
+    (* E-FixBeta *)
+  | TmFix (TmAbs (x, _, t12)) ->
+      subst x tm t12
+
+    (* E-Fix *)
+  | TmFix t1 ->
+      let t1' = eval1 t1 in
+      TmFix t1'
 
   | _ ->
       raise NoRuleApplies

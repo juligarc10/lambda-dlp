@@ -22,10 +22,14 @@
 %token DOT
 %token EQ
 %token COLON
+%token COMMA
 %token ARROW
 %token EOF
 %token PLUSPLUS
 %token LETREC
+
+%token TUPLE
+%token PROJ
 
 %token <int> INTV
 %token <string> STRINGV
@@ -49,10 +53,11 @@ term :
       { TmAbs ($2, $4, $6) }
   | LET STRINGV EQ term IN term
       { TmLetIn ($2, $4, $6) }
-	| term PLUSPLUS term
+  | term PLUSPLUS term
 			{ TmConcat ($1, $3) }
   | LETREC STRINGV COLON ty EQ term IN term
       { TmLetIn ($2, TmFix( TmAbs ($2, $4, $6)), $8)}
+
 
 appTerm :
     atomicTerm

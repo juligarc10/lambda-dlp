@@ -121,16 +121,17 @@ let rec typeof ctx tm = match tm with
       if typeof ctx t1 = TyNat then TyBool
       else raise (Type_error "argument of iszero is not a number")
 
-    (* T-Var *)
+   (* T-Var *)
   | TmVar x ->
-      (try getbinding ctx x with
-       _ -> raise (Type_error ("no binding type for variable " ^ x)))
+    (try gettbinding ctx x with
+     _ -> raise (Type_error ("no binding type for variable " ^ x)))
 
-    (* T-Abs *)
-  | TmAbs (x, tyT1, t2) ->
-      let ctx' = addbinding ctx x tyT1 in
-      let tyT2 = typeof ctx' t2 in
-      TyArr (tyT1, tyT2)
+  (* T-Abs *)
+| TmAbs (x, tyT1, t2) ->
+    let ctx' = addtbinding ctx x tyT1 in
+    let tyT2 = typeof ctx' t2 in
+    TyArr (tyT1, tyT2)
+
 
     (* T-App *)
   | TmApp (t1, t2) ->
@@ -144,9 +145,9 @@ let rec typeof ctx tm = match tm with
 
     (* T-Let *)
   | TmLetIn (x, t1, t2) ->
-      let tyT1 = typeof ctx t1 in
-      let ctx' = addbinding ctx x tyT1 in
-      typeof ctx' t2
+    let tyT1 = typeof ctx t1 in
+    let ctx' = addtbinding ctx x tyT1 in
+    typeof ctx' t2
 
     (* T-String *)
   | TmString s ->
@@ -308,7 +309,7 @@ let rec isval tm = match tm with
 exception NoRuleApplies
 ;;
 
-let rec eval1 tm = match tm with
+let rec eval1 ctx tm = match tm with
     (* E-IfTrue *)
     TmIf (TmTrue, t2, _) ->
       t2
@@ -319,12 +320,12 @@ let rec eval1 tm = match tm with
 
     (* E-If *)
   | TmIf (t1, t2, t3) ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmIf (t1', t2, t3)
 
     (* E-Succ *)
   | TmSucc t1 ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmSucc t1'
 
     (* E-PredZero *)
@@ -337,7 +338,7 @@ let rec eval1 tm = match tm with
 
     (* E-Pred *)
   | TmPred t1 ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmPred t1'
 
     (* E-IszeroZero *)
@@ -350,21 +351,21 @@ let rec eval1 tm = match tm with
 
     (* E-Iszero *)
   | TmIsZero t1 ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmIsZero t1'
 
     (* E-AppAbs *)
-  | TmApp (TmAbs(x, _, t12), v2) when isval v2 ->
-      subst x v2 t12
+  | TmApp (TmAbs(x, tyT1, t12), v2) when isval ctx v2 ->
+      addbinding ctx x tyT1 v2 t12
 
     (* E-App2: evaluate argument before applying function *)
   | TmApp (v1, t2) when isval v1 ->
-      let t2' = eval1 t2 in
+      let t2' = eval1 ctx t2 in
       TmApp (v1, t2')
 
     (* E-App1: evaluate function before argument *)
   | TmApp (t1, t2) ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmApp (t1', t2)
 
     (* E-LetV *)
@@ -373,7 +374,7 @@ let rec eval1 tm = match tm with
 
     (* E-Let *)
   | TmLetIn(x, t1, t2) ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmLetIn (x, t1', t2) 
 
     (* E-Concat*)
@@ -381,11 +382,11 @@ let rec eval1 tm = match tm with
       TmString (s1 ^ s2)
 
   | TmConcat (TmString s1, t2) ->
-    let t2' = eval1 t2 in
+    let t2' = eval1 ctx t2 in
     TmConcat (TmString s1, t2')
   
   | TmConcat (t1, t2) ->
-    let t1' = eval1 t1 in
+    let t1' = eval1 ctx t1 in
     TmConcat (t1', t2)
 
     (* E-FixBeta *)
@@ -394,18 +395,41 @@ let rec eval1 tm = match tm with
 
     (* E-Fix *)
   | TmFix t1 ->
-      let t1' = eval1 t1 in
+      let t1' = eval1 ctx t1 in
       TmFix t1'
+
+  | TmVar s ->
+    getvbinding ctx s
 
   | _ ->
       raise NoRuleApplies
 ;;
 
-let rec eval tm =
+let appy_ctx ctx tm =
+  let rec appy_ctx' ctx tm = match ctx with
+      [] -> tm
+    | (x, v) :: ctx' -> appy_ctx' ctx' (subst x v tm)
+  in
+  appy_ctx' ctx tm
+;;
+
+let rec eval ctx tm =
   try
-    let tm' = eval1 tm in
-    eval tm'
+    let tm' = eval1 ctx tm in
+    eval ctx tm'
   with
     NoRuleApplies -> tm
 ;;
+
+let execute ctx = function
+    Eval tm ->
+      let tm' = appy_ctx ctx tm in
+      let tm'' = eval ctx tm' in
+      print_endline (string_of_term tm'');
+      ctx
+| Bind (s, tm) ->
+    let tyTm = typeof ctx tm in
+    let tm' = eval ctx tm in
+    print_endline(s ^ " : " ^string_of_ty tyTm ^ " = " ^ string_of_term tm');
+    addbinding ctx s tyTm tm'
 

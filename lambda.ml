@@ -8,10 +8,6 @@ type ty =
   | TyString
 ;;
 
-type context =
-  (string * ty) list
-;;
-
 type term =
     TmTrue
   | TmFalse
@@ -30,18 +26,45 @@ type term =
 ;;
 
 
+type command =
+    Eval of term
+  | Bind of string * term
+;;
+
+type binding =
+  TyBind of ty
+  | TmBind of ty * term
+  | TyTmBind of ty * term
+;;
+
+type context =
+  (string * binding) list
+;;
+
 (* CONTEXT MANAGEMENT *)
 
 let emptyctx =
   []
 ;;
 
-let addbinding ctx x bind =
-  (x, bind) :: ctx
+let addtbinding ctx x ty =
+  (x, TyBind ty) :: ctx
 ;;
 
-let getbinding ctx x =
-  List.assoc x ctx
+let addbinding ctx x ty tm =
+  (x, TyTmBind (ty, tm)) :: ctx
+;;
+
+let gettbinding ctx s =
+  match List.assoc s ctx with
+    TyBind ty -> ty
+    |TyTmBind (ty,_) -> ty
+;;
+
+let getvbinding ctx s =
+  match List.assoc s ctx with
+    TyTmBind (_,tm) -> tm
+    | _ -> raise Not_found
 ;;
 
 

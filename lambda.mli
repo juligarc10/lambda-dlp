@@ -29,8 +29,7 @@ type command =
 ;;
 
 type binding =
-  TyBind of ty
-  | TmBind of ty * term
+    TyBind of ty
   | TyTmBind of ty * term
 ;;
 
@@ -39,12 +38,11 @@ type context =
 ;;
 
 val emptyctx : context;;
-val getbinding : context -> string -> ty;;
 
-val addtbinding : binding list -> string -> ty -> binding list
-val addbinding : binding list -> string -> binding -> binding list
-val gettbinding : binding list -> string -> ty
-val getvbinding : binding list -> string -> binding
+val addtbinding : context -> string -> ty -> context
+val addbinding : context -> string -> ty -> term -> context
+val gettbinding : context -> string -> ty
+val getvbinding : context -> string -> term
 
 val string_of_ty : ty -> string;;
 exception Type_error of string;;
@@ -52,7 +50,7 @@ val typeof : context -> term -> ty;;
 
 val string_of_term : term -> string;;
 exception NoRuleApplies;;
-val eval : term -> term;;
+val eval : context -> term -> term;;
 
 val execute : context -> command -> context;;
 

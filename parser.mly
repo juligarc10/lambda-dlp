@@ -57,10 +57,10 @@ term :
 			{ TmConcat ($1, $3) }
   | LETREC STRINGV COLON ty EQ term IN term
       { TmLetIn ($2, TmFix( TmAbs ($2, $4, $6)), $8)}
-  | TUPLE LPAREN termList RPAREN
-      { TmTuple($3) }
-  | PROJ term DOT INTV
-      { TmProj ($2, $4) }
+  | LPAREN termList RPAREN
+      { TmTuple($2) }
+  | term DOT INTV
+      { TmProj ($1, $3) }
 
 termList :
     term

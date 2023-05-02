@@ -440,7 +440,9 @@ let rec eval1 ctx tm = match tm with
   | TmProj (TmTuple tms, n) when n > 0 && n <= List.length tms ->
       List.nth tms (n - 1)
 
-  | TmProj _ -> raise NoRuleApplies
+  | TmProj (t1, n) ->
+      let t1' = eval1 ctx t1 in
+      TmProj (t1', n)
 
       (*TmVar*)
   | TmVar s -> 

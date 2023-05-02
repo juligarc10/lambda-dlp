@@ -22,10 +22,14 @@
 %token DOT
 %token EQ
 %token COLON
+%token COMMA
 %token ARROW
 %token EOF
 %token PLUSPLUS
 %token LETREC
+
+%token TUPLE
+%token PROJ
 
 %token <int> INTV
 %token <string> STRINGV
@@ -52,9 +56,22 @@ term :
   | LET STRINGV EQ term IN term
       { TmLetIn ($2, $4, $6) }
   | term PLUSPLUS term
+			{ TmConcat ($1, $3) }
+  | term PLUSPLUS term
         { TmConcat ($1, $3) }
   | LETREC STRINGV COLON ty EQ term IN term
       { TmLetIn ($2, TmFix( TmAbs ($2, $4, $6)), $8)}
+  | LPAREN termList RPAREN
+      { TmTuple($2) }
+  | term DOT INTV
+      { TmProj ($1, $3) }
+
+termList :
+    term
+      { [$1] }
+  | term COMMA termList
+      { $1 :: $3 }
+
 
 appTerm :
     atomicTerm
@@ -90,6 +107,16 @@ ty :
       { $1 }
   | atomicTy ARROW ty
       { TyArr ($1, $3) }
+  | LPAREN tyList RPAREN
+      { TyTuple($2) }
+  | atomicTy DOT INTV
+      { TyProj ($3, $1) }
+
+tyList :
+    ty
+      { [$1] }
+  | ty COMMA tyList
+      { $1 :: $3 }
 
 atomicTy :
     LPAREN ty RPAREN  
@@ -98,4 +125,6 @@ atomicTy :
       { TyBool }
   | NAT
       { TyNat }
+  | STRING
+      { TyString }
 

@@ -6,38 +6,38 @@ open Lambda;;
 open Parser;;
 open Lexer;;
 
-let top_level_loop () =
-  print_endline "Evaluator of lambda expressions...";
-  let rec loop ctx acc =
-    print_string ">> ";
-    flush stdout;
-    try
-      let line = read_line () in
-      let acc' = acc ^ line ^ "\n" in
-      if String.contains line ';' then
-        let tm_str = String.sub acc' 0 (String.length acc' - 2) in
-        let tm_str' = String.map (function '\n' -> ' ' | c -> c) tm_str in
-        let tm = s token (from_string tm_str') in
-        let tyTm = typeof ctx tm in
-        print_endline (string_of_term (eval tm) ^ " : " ^ string_of_ty tyTm);
-        loop ctx ""
-      else
-        loop ctx acc'
-    with
-      Lexical_error ->
-        print_endline "lexical error";
-        loop ctx ""
-    | Parse_error ->
-        print_endline "syntax error";
-        loop ctx ""
-    | Type_error e ->
-        print_endline ("type error: " ^ e);
-        loop ctx ""
-    | End_of_file ->
-        print_endline "...bye!!!"
-  in
-    loop emptyctx ""
+let rec read_lines acc =
+  let line = read_line () in
+  if String.length line > 0 && String.get line (String.length line - 1) = ';' then
+    List.rev (String.sub line 0 (String.length line - 1) :: acc)
+  else
+    read_lines (line :: acc)
+
+let rec loop ctx =
+  print_string ">> ";
+  flush stdout;
+  try
+    let lines = read_lines [] in
+    let input = String.concat " " lines in
+    let c = s token (from_string input) in 
+    loop (execute ctx c)
+  with
+  | Lexical_error ->
+    print_endline "lexical error";
+    loop ctx
+  | Parse_error ->
+    print_endline "syntax error";
+    loop ctx
+  | Type_error e ->
+    print_endline ("type error: " ^ e);
+    loop ctx
+  | End_of_file ->
+    print_endline "...bye!!!"
 ;;
 
-top_level_loop ()
+let top_level_loop () =
+  print_endline "Evaluator of lambda expressions...";
+  loop emptyctx;
 ;;
+
+top_level_loop ();

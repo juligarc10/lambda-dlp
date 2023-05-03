@@ -36,6 +36,7 @@
 %token PROJ
 %token HEAD
 %token TAIL
+%token EMPTY
 
 %token <int> INTV
 %token <string> STRINGV
@@ -83,6 +84,8 @@ term :
       { TmHead $2 }
   | TAIL term
       { TmTail $2 } 
+  | EMPTY term
+      { TmEmpty $2 }
 
 
 termList :

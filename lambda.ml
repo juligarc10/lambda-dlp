@@ -33,6 +33,7 @@ type term =
   | TmUnit
   | TmHead of term
   | TmTail of term 
+  | TmEmpty of term
 ;;
 
 
@@ -204,6 +205,12 @@ let rec typeof ctx tm = match tm with
     if sameType then TyList [elemTy]
     else raise (Type_error "elements of list have different types")
 
+     (* T-Empty *)
+  | TmEmpty t ->
+    (match typeof ctx t with
+    | TyList _ -> TyBool
+    | _ -> raise (Type_error "argument of empty is not a list"))
+
     (* T-Unit *)
   | TmUnit ->
       TyUnit
@@ -272,6 +279,8 @@ let rec string_of_term = function
       string_of_term t
   | TmTail t ->
       string_of_term t
+  | TmEmpty t ->
+    "empty " ^ string_of_term t
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -324,6 +333,8 @@ let rec free_vars tm = match tm with
       free_vars t
   | TmTail t ->
       free_vars t
+  | TmEmpty t ->
+    free_vars t
 ;;
 
 let rec fresh_name x l =
@@ -378,6 +389,9 @@ let rec subst x s tm = match tm with
       TmHead (subst x s t)
   | TmTail t ->
       TmTail (subst x s t)
+  | TmEmpty t ->
+    TmEmpty (subst x s t)
+
 ;;
 
 let rec isnumericval tm = match tm with
@@ -503,6 +517,12 @@ let rec eval1 ctx tm = match tm with
   | TmList tmlist ->
     let tmlist' = List.map (eval1 ctx) tmlist in
     TmList tmlist'
+
+    (* E-TmEmpty *)
+  | TmEmpty (TmList []) -> TmTrue
+  | TmEmpty (TmList _) -> TmFalse
+  | TmEmpty t1 when isval t1 -> raise NoRuleApplies
+  | TmEmpty t1 -> let t1' = eval1 ctx t1 in TmEmpty t1'
 
     (* E-Proj *)
   | TmProj (TmTuple tms, n) when n > 0 && n <= List.length tms ->

@@ -31,6 +31,7 @@ type term =
   | TmUnit
   | TmHead of term
   | TmTail of term
+  | TmEmpty of term
 ;;
 
 type command =

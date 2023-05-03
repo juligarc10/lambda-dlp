@@ -27,6 +27,8 @@
 %token EOF
 %token PLUSPLUS
 %token LETREC
+%token SEMICOLON
+%token UNIT
 
 %token TUPLE
 %token PROJ
@@ -41,10 +43,16 @@
 %%
 
 s :
-    STRINGV EQ term EOF
+    STRINGV EQ termSeq EOF
 			{ Bind ($1, $3) }
-  |  term EOF
+  |  termSeq EOF
       { Eval $1 }
+
+termSeq :
+		term
+			{ $1 }
+	| termSeq SEMICOLON term
+			{ TmApp ( TmAbs( "_", TyUnit, $3), $1)}
 
 term :
     appTerm
@@ -101,6 +109,8 @@ atomicTerm :
             0 -> TmZero
           | n -> TmSucc (f (n-1))
         in f $1 }
+	| UNIT
+			{ TmUnit }
 
 ty :
     atomicTy
@@ -127,4 +137,6 @@ atomicTy :
       { TyNat }
   | STRING
       { TyString }
+	| UNIT
+			{ TyUnit }
 

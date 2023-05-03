@@ -34,6 +34,7 @@
 
 %token TUPLE
 %token PROJ
+%token HEAD
 
 %token <int> INTV
 %token <string> STRINGV
@@ -75,6 +76,8 @@ term :
       { TmTuple($2) }
   | term DOT INTV
       { TmProj ($1, $3) }
+  | HEAD term
+      { TmHead $2 }
   | LBRAKET termList RBRAKET
       { TmList($2) }
 

@@ -31,6 +31,7 @@ type term =
   | TmList of term list
   | TmProj of term * int
   | TmUnit
+  | TmHead of term
 ;;
 
 
@@ -204,6 +205,10 @@ let rec typeof ctx tm = match tm with
     (* T-Unit *)
   | TmUnit ->
       TyUnit
+ | TmHead t ->
+      (match typeof ctx t with
+      | TyList (tyHead :: _) -> tyHead
+      | _ -> failwith "Argument of head is not a non-empty list")
   ;;
 
 
@@ -251,6 +256,8 @@ let rec string_of_term = function
       string_of_term t ^ "." ^ string_of_int i
   | TmUnit ->
     "unit"
+  | TmHead t ->
+      string_of_term t
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -299,6 +306,8 @@ let rec free_vars tm = match tm with
   | TmProj (t, _) -> 
       free_vars t
   | TmUnit -> []
+  | TmHead t ->
+      free_vars t
 ;;
 
 let rec fresh_name x l =
@@ -349,6 +358,8 @@ let rec subst x s tm = match tm with
   | TmProj (t, i) -> 
       TmProj (subst x s t, i)
   | TmUnit -> TmUnit
+  | TmHead t ->
+    TmHead (subst x s t)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -366,7 +377,7 @@ let rec isval tm = match tm with
   | TmAbs _ -> true
   | TmTuple tmlist -> List.for_all isval tmlist
   | TmList tmlist -> List.for_all isval tmlist
-  | TmProj (t, _) -> isval t
+  | TmProj (t, _) -> true
   | t when isnumericval t -> true
   | TmString _ -> true
   | TmUnit -> true
@@ -469,7 +480,7 @@ let rec eval1 ctx tm = match tm with
   | TmTuple ts ->
       let ts' = List.map (eval1 ctx) ts in
       TmTuple ts'
-      
+
     (* E-List *)
   | TmList tmlist ->
     let tmlist' = List.map (eval1 ctx) tmlist in
@@ -483,9 +494,13 @@ let rec eval1 ctx tm = match tm with
       let t1' = eval1 ctx t1 in
       TmProj (t1', n)
 
-      (*TmVar*)
+    (*TmVar*)
   | TmVar s -> 
-    getvbinding ctx s
+      getvbinding ctx s
+
+    (* E-TmHead *)
+  | TmHead (TmList (h :: _)) when isval h ->
+    h
 
   | _ ->
       raise NoRuleApplies 

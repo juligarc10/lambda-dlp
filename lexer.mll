@@ -33,6 +33,7 @@ rule token = parse
   | "->"        { ARROW }
   | ";"         { SEMICOLON }
   | "unit"      { UNIT }
+  | "head"      { HEAD }
   | ['0'-'9']+  { INTV (int_of_string (Lexing.lexeme lexbuf)) }
   | '"'         { read_string (Buffer.create 17) lexbuf }
   | ['a'-'z']['a'-'z' '_' '0'-'9']*

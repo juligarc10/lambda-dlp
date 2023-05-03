@@ -29,6 +29,7 @@ type term =
   | TmList of term list
   | TmProj of term * int
   | TmUnit
+  | TmHead of term
 ;;
 
 type command =

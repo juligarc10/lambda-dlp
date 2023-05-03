@@ -71,7 +71,7 @@ term :
         { TmConcat ($1, $3) }
   | LETREC STRINGV COLON ty EQ term IN term
       { TmLetIn ($2, TmFix( TmAbs ($2, $4, $6)), $8)}
-  | LPAREN termTuple RPAREN
+  | LPAREN termList RPAREN
       { TmTuple($2) }
   | term DOT INTV
       { TmProj ($1, $3) }
@@ -84,13 +84,8 @@ termList :
         { [$1] }
     | term SEMICOLON termList
         { $1 :: $3 }
-   
-
-termTuple :
-    term
-      { [$1] }
-  | term COMMA termTuple
-      { $1 :: $3 }
+    | term COMMA termList
+        { $1 :: $3 }
 
 
 appTerm :
@@ -129,7 +124,7 @@ ty :
       { $1 }
   | atomicTy ARROW ty
       { TyArr ($1, $3) }
-  | LPAREN tyTuple RPAREN
+  | LPAREN tyList RPAREN
       { TyTuple($2) }
   | LBRAKET tyList RBRAKET
       { TyList ($2) }
@@ -143,12 +138,9 @@ tyList :
       { [$1] }
   | ty SEMICOLON tyList
       { $1 :: $3 }
-
-tyTuple :
-    ty
-      { [$1] }
-  | ty COMMA tyTuple
+  | ty COMMA tyList
       { $1 :: $3 }
+
 
 atomicTy :
     LPAREN ty RPAREN  

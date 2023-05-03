@@ -6,6 +6,7 @@ type ty =
   | TyString
   | TyTuple of ty list
   | TyProj of int * ty
+  | TyUnit
 ;;
 
 type term =
@@ -25,6 +26,7 @@ type term =
   | TmFix of term
   | TmTuple of term list
   | TmProj of term * int
+  | TmUnit
 ;;
 
 type command =

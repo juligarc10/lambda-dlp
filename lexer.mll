@@ -29,7 +29,7 @@ rule token = parse
   | '='         { EQ }
   | ':'         { COLON }
   | "->"        { ARROW }
-  | "-"         { SEMICOLON }
+  | ";"         { SEMICOLON }
   | "unit"      { UNIT }
   | ['0'-'9']+  { INTV (int_of_string (Lexing.lexeme lexbuf)) }
   | '"'         { read_string (Buffer.create 17) lexbuf }

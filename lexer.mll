@@ -23,6 +23,8 @@ rule token = parse
   | "Nat"       { NAT }
   | '('         { LPAREN }
   | ')'         { RPAREN }
+  | '['         { LBRAKET }
+  | ']'         { RBRAKET }
   | '.'         { DOT }
   | ','         { COMMA }
   | "++"        { PLUSPLUS }

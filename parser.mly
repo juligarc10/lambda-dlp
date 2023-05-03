@@ -17,6 +17,8 @@
 %token BOOL
 %token NAT
 
+%token LBRAKET
+%token RBRAKET
 %token LPAREN
 %token RPAREN
 %token DOT

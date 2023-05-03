@@ -32,6 +32,7 @@ type term =
   | TmProj of term * int
   | TmUnit
   | TmHead of term
+  | TmTail of term 
 ;;
 
 
@@ -202,13 +203,24 @@ let rec typeof ctx tm = match tm with
     let sameType = List.for_all (fun t -> typeof ctx t = elemTy) ts in
     if sameType then TyList [elemTy]
     else raise (Type_error "elements of list have different types")
+
     (* T-Unit *)
   | TmUnit ->
       TyUnit
- | TmHead t ->
+    (* T-Head *)
+  | TmHead t ->
       (match typeof ctx t with
       | TyList (tyHead :: _) -> tyHead
       | _ -> failwith "Argument of head is not a non-empty list")
+  (* T-Tail *)
+  | TmTail t1 ->
+    (match typeof ctx t1 with
+    | TyList (ty::_) -> TyList [ty]
+    | TyList [] -> raise (Type_error "empty list")
+    | _ -> raise (Type_error "argument of tail is not a list"))
+
+
+
   ;;
 
 
@@ -257,6 +269,8 @@ let rec string_of_term = function
   | TmUnit ->
     "unit"
   | TmHead t ->
+      string_of_term t
+  | TmTail t ->
       string_of_term t
 ;;
 
@@ -307,6 +321,8 @@ let rec free_vars tm = match tm with
       free_vars t
   | TmUnit -> []
   | TmHead t ->
+      free_vars t
+  | TmTail t ->
       free_vars t
 ;;
 
@@ -359,7 +375,9 @@ let rec subst x s tm = match tm with
       TmProj (subst x s t, i)
   | TmUnit -> TmUnit
   | TmHead t ->
-    TmHead (subst x s t)
+      TmHead (subst x s t)
+  | TmTail t ->
+      TmTail (subst x s t)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -499,9 +517,16 @@ let rec eval1 ctx tm = match tm with
       getvbinding ctx s
 
     (* E-TmHead *)
-  | TmHead (TmList (h :: _)) when isval h ->
-    h
-
+    | TmHead (TmList (h :: t)) when isval h && List.for_all isval t ->
+      h
+  
+  | TmTail t1 ->
+      let t1' = eval1 ctx t1 in
+        (match t1' with
+          | TmList [] -> raise NoRuleApplies
+          | TmList (_::tl) -> TmList tl
+          | _ -> raise NoRuleApplies)
+          
   | _ ->
       raise NoRuleApplies 
 ;;

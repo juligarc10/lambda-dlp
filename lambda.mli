@@ -30,6 +30,7 @@ type term =
   | TmProj of term * int
   | TmUnit
   | TmHead of term
+  | TmTail of term
 ;;
 
 type command =

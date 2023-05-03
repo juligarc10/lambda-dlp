@@ -35,6 +35,7 @@
 %token TUPLE
 %token PROJ
 %token HEAD
+%token TAIL
 
 %token <int> INTV
 %token <string> STRINGV
@@ -67,7 +68,7 @@ term :
   | LET STRINGV EQ term IN term
       { TmLetIn ($2, $4, $6) }
   | term PLUSPLUS term
-			{ TmConcat ($1, $3) }
+		{ TmConcat ($1, $3) }
   | term PLUSPLUS term
         { TmConcat ($1, $3) }
   | LETREC STRINGV COLON ty EQ term IN term
@@ -76,12 +77,13 @@ term :
       { TmTuple($2) }
   | term DOT INTV
       { TmProj ($1, $3) }
-  | HEAD term
-      { TmHead $2 }
   | LBRAKET termList RBRAKET
       { TmList($2) }
+  | HEAD term
+      { TmHead $2 }
+  | TAIL term
+      { TmTail $2 } 
 
-      
 
 termList :
       term
@@ -89,13 +91,11 @@ termList :
     | term SEMICOLON termList
         { $1 :: $3 }
    
-
 termTuple :
     term
       { [$1] }
   | term COMMA termTuple
       { $1 :: $3 }
-
 
 appTerm :
     atomicTerm
@@ -137,10 +137,8 @@ ty :
       { TyTuple($2) }
   | LBRAKET tyList RBRAKET
       { TyList ($2) }
-      
   | atomicTy DOT INTV
       { TyProj ($3, $1) }
-
 
 tyList :
     ty

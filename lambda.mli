@@ -5,6 +5,7 @@ type ty =
   | TyArr of ty * ty
   | TyString
   | TyTuple of ty list
+  | TyList of ty list
   | TyProj of int * ty
   | TyUnit
 ;;
@@ -25,6 +26,7 @@ type term =
   | TmConcat of term * term
   | TmFix of term
   | TmTuple of term list
+  | TmList of term list
   | TmProj of term * int
   | TmUnit
 ;;

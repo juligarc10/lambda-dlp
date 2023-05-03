@@ -7,6 +7,7 @@ type ty =
   | TyArr of ty * ty
   | TyString
   | TyTuple of ty list
+  | TyList of ty list
   | TyProj of int * ty
   | TyUnit
 ;;
@@ -27,6 +28,7 @@ type term =
   | TmConcat of term * term
   | TmFix of term
   | TmTuple of term list
+  | TmList of term list
   | TmProj of term * int
   | TmUnit
 ;;
@@ -86,6 +88,8 @@ let rec string_of_ty ty = match ty with
       "String"
   | TyTuple tys ->
       "(" ^ String.concat ", " (List.map string_of_ty tys) ^ ")"
+  | TyList tys ->
+      "[" ^ String.concat "; " (List.map string_of_ty tys) ^ "]"
   | TyProj (i, ty) ->
       string_of_ty ty ^ "." ^ string_of_int i
   | TyUnit ->
@@ -188,7 +192,15 @@ let rec typeof ctx tm = match tm with
               if i <= List.length tys then List.nth tys (i-1)
               else raise (Type_error "index out of bounds in tuple projection")
           | _ -> raise (Type_error "tuple type expected"))
-
+    (* T-List *)
+  | TmList ts ->
+    let elemTy = match ts with
+      [] -> raise (Type_error "empty list")
+    | hd :: _ -> typeof ctx hd
+    in
+    let sameType = List.for_all (fun t -> typeof ctx t = elemTy) ts in
+    if sameType then TyList [elemTy]
+    else raise (Type_error "elements of list have different types")
     (* T-Unit *)
   | TmUnit ->
       TyUnit
@@ -233,6 +245,8 @@ let rec string_of_term = function
       "fix " ^ "(" ^ string_of_term t ^ ")"
   | TmTuple terms ->
       "(" ^ String.concat ", " (List.map string_of_term terms) ^ ")"
+  | TmList terms ->
+    "[" ^ String.concat "; " (List.map string_of_term terms) ^ "]"
   | TmProj (t, i) ->
       string_of_term t ^ "." ^ string_of_int i
   | TmUnit ->
@@ -280,7 +294,10 @@ let rec free_vars tm = match tm with
       free_vars t
   | TmTuple(ts) -> 
     List.fold_left lunion [] (List.map free_vars ts)
-  | TmProj (t, _) -> free_vars t
+  | TmList ts ->
+    List.fold_left lunion [] (List.map free_vars ts)
+  | TmProj (t, _) -> 
+      free_vars t
   | TmUnit -> []
 ;;
 
@@ -327,6 +344,8 @@ let rec subst x s tm = match tm with
       TmFix (subst x s t)
   | TmTuple ts -> 
       TmTuple (List.map (fun t -> subst x s t) ts)
+  | TmList ts ->
+    TmList (List.map (fun t -> subst x s t) ts)
   | TmProj (t, i) -> 
       TmProj (subst x s t, i)
   | TmUnit -> TmUnit
@@ -337,6 +356,7 @@ let rec isnumericval tm = match tm with
   | TmSucc t -> isnumericval t
   | TmTuple lst -> List.for_all isnumericval lst
   | TmProj (t, _) -> isnumericval t
+  | TmList lst -> List.for_all isnumericval lst
   | _ -> false
 ;;
 
@@ -345,6 +365,7 @@ let rec isval tm = match tm with
   | TmFalse -> true
   | TmAbs _ -> true
   | TmTuple tmlist -> List.for_all isval tmlist
+  | TmList tmlist -> List.for_all isval tmlist
   | TmProj (t, _) -> isval t
   | t when isnumericval t -> true
   | TmString _ -> true
@@ -448,6 +469,11 @@ let rec eval1 ctx tm = match tm with
   | TmTuple ts ->
       let ts' = List.map (eval1 ctx) ts in
       TmTuple ts'
+      
+    (* E-List *)
+  | TmList tmlist ->
+    let tmlist' = List.map (eval1 ctx) tmlist in
+    TmList tmlist'
 
     (* E-Proj *)
   | TmProj (TmTuple tms, n) when n > 0 && n <= List.length tms ->

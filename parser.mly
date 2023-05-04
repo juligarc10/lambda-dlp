@@ -30,6 +30,7 @@
 %token SEMICOLON
 %token UNIT
 %token PRINT_NAT
+%token PRINT_STRING
 
 %token TUPLE
 %token PROJ
@@ -93,6 +94,8 @@ appTerm :
       { TmIsZero $2 }
   | PRINT_NAT atomicTerm
       { TmPrintNat $2 }
+  | PRINT_STRING atomicTerm
+      { TmPrintString $2 }
   | appTerm atomicTerm
       { TmApp ($1, $2) }
 

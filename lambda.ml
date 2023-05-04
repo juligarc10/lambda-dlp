@@ -30,6 +30,7 @@ type term =
   | TmProj of term * int
   | TmUnit
   | TmPrintNat of term
+  | TmPrintString of term
 ;;
 
 
@@ -73,12 +74,19 @@ let getvbinding ctx s =
     | _ -> raise Not_found
 ;;
 
+(* I/O *)
+
 let print_nat tm =
   let rec f n t' = match t' with
       TmZero -> print_int n
     | TmSucc s -> f (n+1) s
     | _ -> print_string "Not a number"
   in f 0 tm
+
+  let print_stringv tm =
+    match tm with
+      TmString s -> print_string s
+    | _ -> print_string "Not a string"
 
 (* TYPE MANAGEMENT (TYPING) *)
 
@@ -204,6 +212,11 @@ let rec typeof ctx tm = match tm with
   | TmPrintNat t1 ->
       if typeof ctx t1 = TyNat then TyUnit
       else raise (Type_error "argument of print_nat is not a number")
+
+    (* T-PrintString *)
+  | TmPrintString t1 ->
+      if typeof ctx t1 = TyString then TyUnit
+      else raise (Type_error "argument of print_string is not a string")
   ;;
 
 
@@ -251,6 +264,8 @@ let rec string_of_term = function
     "unit"
   | TmPrintNat t1 ->
     "print_nat " ^ "(" ^ string_of_term t1 ^ ")"
+  | TmPrintString t1 ->
+    "print_string " ^ "(" ^ string_of_term t1 ^ ")"
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -297,6 +312,7 @@ let rec free_vars tm = match tm with
   | TmProj (t, _) -> free_vars t
   | TmUnit -> []
   | TmPrintNat t1 -> free_vars t1
+  | TmPrintString t1 -> free_vars t1
 ;;
 
 let rec fresh_name x l =
@@ -346,6 +362,7 @@ let rec subst x s tm = match tm with
       TmProj (subst x s t, i)
   | TmUnit -> TmUnit
   | TmPrintNat t1 -> TmPrintNat (subst x s t1)
+  | TmPrintString t1 -> TmPrintString (subst x s t1)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -473,12 +490,17 @@ let rec eval1 ctx tm = match tm with
       let t1' = eval1 ctx t1 in
       TmProj (t1', n)
 
-      (*TmVar*)
+    (*TmVar*)
   | TmVar s -> 
     getvbinding ctx s
 
+    (* TmPrintNat *)
   | TmPrintNat t1 when isnumericval t1 ->
       print_nat t1; TmUnit
+
+    (* TmPrintString*)
+  | TmPrintString t1 when isval t1 ->
+      print_stringv t1; TmUnit
 
   | _ ->
       raise NoRuleApplies 

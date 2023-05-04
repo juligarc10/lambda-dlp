@@ -28,6 +28,7 @@ type term =
   | TmProj of term * int
   | TmUnit
   | TmPrintNat of term
+  | TmPrintString of term
 ;;
 
 type command =
@@ -52,6 +53,7 @@ val gettbinding : context -> string -> ty
 val getvbinding : context -> string -> term
 
 val print_nat : term -> unit;;
+val print_stringv : term -> unit;;
 
 val string_of_ty : ty -> string;;
 exception Type_error of string;;

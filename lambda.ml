@@ -225,9 +225,6 @@ let rec typeof ctx tm = match tm with
     | TyList (ty::_) -> TyList [ty]
     | TyList [] -> raise (Type_error "empty list")
     | _ -> raise (Type_error "argument of tail is not a list"))
-
-
-
   ;;
 
 
@@ -537,9 +534,17 @@ let rec eval1 ctx tm = match tm with
       getvbinding ctx s
 
     (* E-TmHead *)
-    | TmHead (TmList (h :: t)) when isval h && List.for_all isval t ->
-      h
+  | TmHead (TmList (h :: t)) when isval h && List.for_all isval t ->
+    h
+
+  | TmHead (tm) ->
+    let tm' = eval1 ctx tm in
+    TmHead tm'
   
+    (* E-TmTail *)
+  | TmTail (TmList (h :: t)) when isval h && List.for_all isval t ->
+    TmList t
+
   | TmTail t1 ->
       let t1' = eval1 ctx t1 in
         (match t1' with

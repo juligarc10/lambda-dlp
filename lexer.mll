@@ -33,6 +33,7 @@ rule token = parse
   | "unit"      { UNIT }
   | "print_nat" { PRINT_NAT }
   | "print_string" { PRINT_STRING }
+  | "print_newline" { PRINT_NEWLINE }
   | ['0'-'9']+  { INTV (int_of_string (Lexing.lexeme lexbuf)) }
   | '"'         { read_string (Buffer.create 17) lexbuf }
   | ['a'-'z']['a'-'z' '_' '0'-'9']*

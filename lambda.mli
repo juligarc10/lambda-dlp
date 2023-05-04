@@ -29,6 +29,7 @@ type term =
   | TmUnit
   | TmPrintNat of term
   | TmPrintString of term
+  | TmPrintNewline
 ;;
 
 type command =
@@ -54,6 +55,7 @@ val getvbinding : context -> string -> term
 
 val print_nat : term -> unit;;
 val print_stringv : term -> unit;;
+val print_newline : unit -> unit;;
 
 val string_of_ty : ty -> string;;
 exception Type_error of string;;

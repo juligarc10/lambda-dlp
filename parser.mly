@@ -31,6 +31,7 @@
 %token UNIT
 %token PRINT_NAT
 %token PRINT_STRING
+%token PRINT_NEWLINE
 
 %token TUPLE
 %token PROJ
@@ -96,6 +97,8 @@ appTerm :
       { TmPrintNat $2 }
   | PRINT_STRING atomicTerm
       { TmPrintString $2 }
+  | PRINT_NEWLINE
+      { TmPrintNewline }
   | appTerm atomicTerm
       { TmApp ($1, $2) }
 

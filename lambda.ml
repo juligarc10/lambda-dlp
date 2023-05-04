@@ -31,6 +31,7 @@ type term =
   | TmUnit
   | TmPrintNat of term
   | TmPrintString of term
+  | TmPrintNewline
 ;;
 
 
@@ -87,6 +88,9 @@ let print_nat tm =
     match tm with
       TmString s -> print_string s
     | _ -> print_string "Not a string"
+
+  let print_newline () =
+    print_newline ()
 
 (* TYPE MANAGEMENT (TYPING) *)
 
@@ -217,6 +221,10 @@ let rec typeof ctx tm = match tm with
   | TmPrintString t1 ->
       if typeof ctx t1 = TyString then TyUnit
       else raise (Type_error "argument of print_string is not a string")
+  
+      (* T-PrintNewLine *)
+  | TmPrintNewline ->
+      TyUnit
   ;;
 
 
@@ -266,6 +274,8 @@ let rec string_of_term = function
     "print_nat " ^ "(" ^ string_of_term t1 ^ ")"
   | TmPrintString t1 ->
     "print_string " ^ "(" ^ string_of_term t1 ^ ")"
+  | TmPrintNewline ->
+    "print_newline"
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -313,6 +323,7 @@ let rec free_vars tm = match tm with
   | TmUnit -> []
   | TmPrintNat t1 -> free_vars t1
   | TmPrintString t1 -> free_vars t1
+  | TmPrintNewline -> []
 ;;
 
 let rec fresh_name x l =
@@ -363,6 +374,7 @@ let rec subst x s tm = match tm with
   | TmUnit -> TmUnit
   | TmPrintNat t1 -> TmPrintNat (subst x s t1)
   | TmPrintString t1 -> TmPrintString (subst x s t1)
+  | TmPrintNewline -> TmPrintNewline
 ;;
 
 let rec isnumericval tm = match tm with
@@ -501,6 +513,10 @@ let rec eval1 ctx tm = match tm with
     (* TmPrintString*)
   | TmPrintString t1 when isval t1 ->
       print_stringv t1; TmUnit
+
+    (* TmPrintNewline *)
+  | TmPrintNewline ->
+      print_newline (); TmUnit
 
   | _ ->
       raise NoRuleApplies 

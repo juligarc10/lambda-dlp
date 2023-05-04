@@ -29,6 +29,7 @@
 %token LETREC
 %token SEMICOLON
 %token UNIT
+%token PRINT_NAT
 
 %token TUPLE
 %token PROJ
@@ -90,6 +91,8 @@ appTerm :
       { TmPred $2 }
   | ISZERO atomicTerm
       { TmIsZero $2 }
+  | PRINT_NAT atomicTerm
+      { TmPrintNat $2 }
   | appTerm atomicTerm
       { TmApp ($1, $2) }
 

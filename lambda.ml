@@ -29,6 +29,7 @@ type term =
   | TmTuple of term list
   | TmProj of term * int
   | TmUnit
+  | TmPrintNat of term
 ;;
 
 
@@ -72,6 +73,12 @@ let getvbinding ctx s =
     | _ -> raise Not_found
 ;;
 
+let print_nat tm =
+  let rec f n t' = match t' with
+      TmZero -> print_int n
+    | TmSucc s -> f (n+1) s
+    | _ -> print_string "Not a number"
+  in f 0 tm
 
 (* TYPE MANAGEMENT (TYPING) *)
 
@@ -192,6 +199,11 @@ let rec typeof ctx tm = match tm with
     (* T-Unit *)
   | TmUnit ->
       TyUnit
+
+    (* T-PrintNat *)
+  | TmPrintNat t1 ->
+      if typeof ctx t1 = TyNat then TyUnit
+      else raise (Type_error "argument of print_nat is not a number")
   ;;
 
 
@@ -237,6 +249,8 @@ let rec string_of_term = function
       string_of_term t ^ "." ^ string_of_int i
   | TmUnit ->
     "unit"
+  | TmPrintNat t1 ->
+    "print_nat " ^ "(" ^ string_of_term t1 ^ ")"
 ;;
 
 let rec ldif l1 l2 = match l1 with
@@ -282,6 +296,7 @@ let rec free_vars tm = match tm with
     List.fold_left lunion [] (List.map free_vars ts)
   | TmProj (t, _) -> free_vars t
   | TmUnit -> []
+  | TmPrintNat t1 -> free_vars t1
 ;;
 
 let rec fresh_name x l =
@@ -330,6 +345,7 @@ let rec subst x s tm = match tm with
   | TmProj (t, i) -> 
       TmProj (subst x s t, i)
   | TmUnit -> TmUnit
+  | TmPrintNat t1 -> TmPrintNat (subst x s t1)
 ;;
 
 let rec isnumericval tm = match tm with
@@ -460,6 +476,9 @@ let rec eval1 ctx tm = match tm with
       (*TmVar*)
   | TmVar s -> 
     getvbinding ctx s
+
+  | TmPrintNat t1 when isnumericval t1 ->
+      print_nat t1; TmUnit
 
   | _ ->
       raise NoRuleApplies 

@@ -27,6 +27,7 @@ type term =
   | TmTuple of term list
   | TmProj of term * int
   | TmUnit
+  | TmPrintNat of term
 ;;
 
 type command =
@@ -49,6 +50,8 @@ val addtbinding : context -> string -> ty -> context
 val addbinding : context -> string -> ty -> term -> context
 val gettbinding : context -> string -> ty
 val getvbinding : context -> string -> term
+
+val print_nat : term -> unit;;
 
 val string_of_ty : ty -> string;;
 exception Type_error of string;;

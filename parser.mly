@@ -107,16 +107,6 @@ ty :
       { $1 }
   | atomicTy ARROW ty
       { TyArr ($1, $3) }
-  | LPAREN tyList RPAREN
-      { TyTuple($2) }
-  | atomicTy DOT INTV
-      { TyProj ($3, $1) }
-
-tyList :
-    ty
-      { [$1] }
-  | ty COMMA tyList
-      { $1 :: $3 }
 
 atomicTy :
     LPAREN ty RPAREN  

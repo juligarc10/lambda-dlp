@@ -33,7 +33,7 @@ letrec fib : Nat -> Nat =
   lambda n : Nat. if iszero n then 0
     else if iszero (pred n) then 1
     else sum (fib (pred n)) (fib (pred (pred n))) in
-fib 10:
+fib 10;
 
 
 Fact:
@@ -43,6 +43,6 @@ letrec mult : Nat -> Nat -> Nat =
   lambda n : Nat. lambda m : Nat. if iszero n then 0 else sum m (mult (pred n) m) in
     letrec fact : Nat -> Nat =
   lambda n : Nat. if iszero n then 1 else mult n (fact (pred n)) in
-fact 6
+fact 6;
 
 
